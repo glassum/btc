@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>btc 2 usd</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="btc.css">
+</head>
+<body>
+
+<h2>Сторонняя комиссия</h2>
+<label>Сумма в BTC</label>
+<input type="text" id="in" value="0.77643">
+<label>Fee, %</label>
+<input type="text" id="fee" value="5">
+<label>Комиссия Maker'а, %</label>
+<input type="text" id="maker" value="0.1" required/>
+<label>BTC к $</label>
+<input type="text" id="btc2usd" value="69834.14000953">
+
+<h2>Наша комиссия</h2>
+<label>Networkfee, Euro</label>
+<input type="text" id="networkfee" value="4.2" required/>
+<label>Euro к $</label>
+<input type="text" id="euro2usd" value="1.1" required/>
+
+<h2>Итог</h2>
+<input type="text" id="out" value="" required/>
+
+<script src='https://cdn.jsdelivr.net/npm/bignumber.js@9.1.2/bignumber.min.js'></script>
+<script type="module">
+    const Max = 20;
+    const print = (a) => a.toFormat(Max);
+
+    window.onload = () => {
+
+        ["in", "fee", "networkfee", "maker", "btc2usd", "euro2usd"].map(v => document.getElementById(v).addEventListener("input", () => {
+            let total = BigNumber(document.getElementById("in").value);
+            let fee = BigNumber(document.getElementById("fee").value);
+            let maker = BigNumber(document.getElementById("maker").value);
+            let networkfee = BigNumber(document.getElementById("networkfee").value);
+            let btc2usd = BigNumber(document.getElementById("btc2usd").value);
+            let euro2usd = BigNumber(document.getElementById("euro2usd").value);
+
+            console.log(print(total));
+            total = total.times(BigNumber(100).minus(BigNumber(fee)).dividedBy(BigNumber(100)));
+            console.log(print(total));
+            total = total.times(BigNumber(100).minus(BigNumber(maker)).dividedBy(BigNumber(100)));
+            console.log(print(total));
+            total = total.times(btc2usd);
+            console.log(print(total));
+            total = total.minus(euro2usd.times(networkfee));
+
+            document.getElementById("out").value = print(total);
+            console.log(print(total));
+        }));
+
+        document.getElementById("in").dispatchEvent(new Event("input", {bubbles: true}));
+    }
+
+</script>
+
+</body>
+</html>
