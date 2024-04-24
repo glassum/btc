@@ -8,41 +8,71 @@
 </head>
 <body>
 
+<button id="reset">Сброс</button>
+
 <h2>Сторонняя комиссия</h2>
 <label>Сумма в BTC</label>
-<input type="text" id="in" value="0.77643">
+<input type="text" id="sum_in">
 <label>Fee, %</label>
-<input type="text" id="fee" value="5">
+<input type="text" id="fee">
 <label>Комиссия Maker'а, %</label>
-<input type="text" id="maker" value="0.1" required/>
+<input type="text" id="maker" required/>
+<label>Комиссия Taker'а, %</label>
+<input type="text" id="taker" required/>
 <label>BTC к $</label>
-<input type="text" id="btc2usd" value="69834.14000953">
+<input type="text" id="btc2usd">
 
 <h2>Наша комиссия</h2>
 <label>Networkfee, Euro</label>
-<input type="text" id="networkfee" value="4.2" required/>
+<input type="text" id="networkfee" required/>
 <label>Euro к $</label>
-<input type="text" id="euro2usd" value="1.1" required/>
+<input type="text" id="euro2usd" required/>
 
 <h2>Итог</h2>
-<input type="text" id="out" value="" required/>
+<input type="text" id="sum_out" required/>
 
 <script src='https://cdn.jsdelivr.net/npm/bignumber.js@9.1.2/bignumber.min.js'></script>
 <script type="module">
     const Max = 20;
-    const print = (a) => a.toFormat(Max);
+    const print = a => a.toFormat(Max);
+    const fields = [
+        {id: "sum_in", value: "0.77643"},
+        {id: "fee", value: "5"},
+        {id: "maker", value: "0.1"},
+        {id: "taker", value: "0.2"},
+        {id: "networkfee", value: "4.2"},
+        {id: "btc2usd", value: "69834.14000953"},
+        {id: "euro2usd", value: "1.1"},
+        {id: "sum_out", value: "0"}
+    ]
+
+    let sum_in, fee, maker, taker, networkfee, btc2usd, euro2usd, sum_out;
+
+    function init() {
+        fields.map(v => document.getElementById(v.id).value = v.value);
+        document.getElementById("sum_in").dispatchEvent(new Event("input", {bubbles: true}));
+    }
+
+    function get_fields() {
+        sum_in = BigNumber(document.getElementById("sum_in").value);
+        fee = BigNumber(document.getElementById("fee").value);
+        maker = BigNumber(document.getElementById("maker").value);
+        taker = BigNumber(document.getElementById("taker").value);
+        networkfee = BigNumber(document.getElementById("networkfee").value);
+        btc2usd = BigNumber(document.getElementById("btc2usd").value);
+        euro2usd = BigNumber(document.getElementById("euro2usd").value);
+        sum_out = BigNumber(document.getElementById("sum_out").value);
+    }
 
     window.onload = () => {
 
-        ["in", "fee", "networkfee", "maker", "btc2usd", "euro2usd"].map(v => document.getElementById(v).addEventListener("input", () => {
-            let total = BigNumber(document.getElementById("in").value);
-            let fee = BigNumber(document.getElementById("fee").value);
-            let maker = BigNumber(document.getElementById("maker").value);
-            let networkfee = BigNumber(document.getElementById("networkfee").value);
-            let btc2usd = BigNumber(document.getElementById("btc2usd").value);
-            let euro2usd = BigNumber(document.getElementById("euro2usd").value);
+        BigNumber.config({FORMAT: {groupSize: 3, groupSeparator: '', decimalSeparator: '.'}});
 
-            console.log(print(total));
+        document.getElementById("reset").addEventListener("click", () => init());
+
+        fields.filter(v => v.id !== "sum_out").map(v => document.getElementById(v.id).addEventListener("input", () => {
+            get_fields();
+            let total = sum_in;
             total = total.times(BigNumber(100).minus(BigNumber(fee)).dividedBy(BigNumber(100)));
             console.log(print(total));
             total = total.times(BigNumber(100).minus(BigNumber(maker)).dividedBy(BigNumber(100)));
@@ -51,11 +81,29 @@
             console.log(print(total));
             total = total.minus(euro2usd.times(networkfee));
 
-            document.getElementById("out").value = print(total);
+            document.getElementById("sum_out").value = print(total);
             console.log(print(total));
         }));
 
-        document.getElementById("in").dispatchEvent(new Event("input", {bubbles: true}));
+        ["sum_out"].map(v => document.getElementById(v).addEventListener("input", () => { // А здесь разворачиваем формулу обратно
+            get_fields();
+            console.log(print(sum_out));
+            let total = sum_out;
+            console.log(print(total));
+            total = total.plus(euro2usd.times(networkfee));
+            console.log(print(total));
+            total = total.dividedBy(btc2usd);
+            console.log(print(total));
+            total = total.dividedBy(BigNumber(100).minus(BigNumber(taker)).dividedBy(BigNumber(100)));
+            console.log(print(total));
+            total = total.dividedBy(BigNumber(100).minus(BigNumber(fee)).dividedBy(BigNumber(100)));
+
+            document.getElementById("sum_in").value = print(total);
+            console.log(print(total));
+        }));
+
+        init();
+
     }
 
 </script>
